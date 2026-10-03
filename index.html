@@ -3,34 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebUI Lab</title>
-    <!-- 引入外部 CSS -->
-    <link rel="stylesheet" href="css/style.css">
+    <title>StudyFlow</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <!-- 左側邊欄 -->
-    <aside>
-        <button>+ 新增聊天</button>
-        <nav>
-            <a href="#">歷史紀錄 1</a>
-            <a href="#">歷史紀錄 2</a>
+    <!-- 左側：網站名稱 + 導覽選單 -->
+    <aside class="sidebar">
+        <div class="brand">
+            <p class="brand-name">StudyFlow</p>
+            <p class="brand-desc">個人學習管理</p>
+        </div>
+
+        <nav class="nav">
+            <a class="nav-link is-active" href="#">儀表板</a>
+            <a class="nav-link" href="#">課程</a>
+            <a class="nav-link" href="#">作業</a>
+            <a class="nav-link" href="#">行事曆</a>
+            <a class="nav-link" href="#">學習計時</a>
+            <a class="nav-link" href="#">番茄鐘</a>
+            <a class="nav-link" href="#">學習統計</a>
+            <a class="nav-link" href="#">學習計畫</a>
         </nav>
     </aside>
 
-    <!-- 右側主要區塊 -->
-    <main>
-        <header>
-            <h1>WebUI 聊天介面</h1>
+    <!-- 右側：目前頁面內容 -->
+    <main class="main">
+        <header class="page-header">
+            <h1>儀表板</h1>
+            <!-- 日期會由 script.js 填入 -->
+            <p id="today-date" class="today-date">載入日期中…</p>
         </header>
-        
-        <section>
-            <p><strong>AI 助理:</strong> <small>剛剛</small><br>你好！準備好開始今天的開發了嗎？</p>
-        </section>
 
-        <form>
-            <textarea placeholder="輸入訊息..."></textarea>
-            <button type="submit">送出</button>
-        </form>
+        <section class="page-body">
+            <p class="placeholder">
+                目前只有網站骨架。下一步會在這裡放「今日課程、待辦事項、今日學習時間」。
+            </p>
+        </section>
     </main>
+
+    <script src="script.js"></script>
 </body>
 </html>
