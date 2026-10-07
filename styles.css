@@ -88,14 +88,34 @@ body {
     padding: 32px;
 }
 
-.placeholder {
-    max-width: 520px;
+.dashboard-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+}
+
+.dashboard-card {
     padding: 20px;
     background-color: #ffffff;
     border: 1px solid #e7e5e4;
     border-radius: 12px;
     color: #57534e;
+    font: inherit;
     line-height: 1.6;
+    text-align: left;
+    cursor: pointer;
+}
+
+.dashboard-card h2 {
+    margin-bottom: 8px;
+    color: #1c1917;
+    font-size: 18px;
+}
+
+.dashboard-card.is-selected {
+    border-color: #2d6a4f;
+    background-color: #eaf4ee;
+    box-shadow: 0 0 0 2px #2d6a4f;
 }
 
 /* 手機：選單改放到上方，避免左右擠在一起 */

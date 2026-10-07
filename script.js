@@ -13,3 +13,17 @@ const dateText = now.toLocaleDateString("zh-TW", {
 });
 
 dateElement.textContent = dateText;
+
+const dashboardCards = document.querySelectorAll(".dashboard-card");
+
+function selectDashboardCard(event) {
+    dashboardCards.forEach((card) => {
+        card.classList.remove("is-selected");
+    });
+
+    event.currentTarget.classList.add("is-selected");
+}
+
+dashboardCards.forEach((card) => {
+    card.addEventListener("click", selectDashboardCard);
+});
