@@ -3,21 +3,78 @@
     box-sizing: border-box;
     margin: 0;
     padding: 0;
+    font-family: sans-serif;
 }
 
 body {
     display: flex;
     min-height: 100vh;
-    font-family: "Segoe UI", "Noto Sans TC", sans-serif;
-    background-color: #f6f5f2;
-    color: #1c1917;
+    background-color: #f3f4f6;
 }
 
 /* ---------- 左側選單 ---------- */
-.sidebar {
+aside {
+    width: 260px;
+    background-color: #202123;
+    color: white;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+aside button {
+    padding: 10px;
+    cursor: pointer;
+}
+aside nav {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+aside a {
+    color: #ececf1;
+    text-decoration: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+}
+aside a:hover {
+    background-color: #343541;
+}
+
+/* ---------- 主要內容區 ---------- */
+main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+header {
+    padding: 20px;
+    background-color: white;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;/* 讓標題和日期分左右 */
+    align-items: center;/* 讓標題和日期垂直置中 */
+}
+
+section {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    background-color: #ffffff;/* 行事曆背景色改為白色 */
+    margin: 20px;/* 行事曆區塊與邊界保持距離 */
+    border-radius: 8px;/* 行事曆區塊圓角 */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);/* 行事曆區塊陰影 */
+}
+
+/* ---------- 讓行事曆填滿section的高度---------- */
+#calendar {
+    height: 100%;
+}
+
+/*.sidebar {
     width: 240px;
     padding: 28px 20px;
-    background-color: #ffffff;
+    background-color: #f3d2c1;
     border-right: 1px solid #e7e5e4;
 }
 
@@ -28,7 +85,7 @@ body {
 .brand-name {
     font-size: 22px;
     font-weight: 700;
-    color: #2d6a4f;
+    color: #001858;
 }
 
 .brand-desc {
@@ -61,7 +118,7 @@ body {
 }
 
 /* ---------- 右側主畫面 ---------- */
-.main {
+/*.main {
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -119,7 +176,7 @@ body {
 }
 
 /* 手機：選單改放到上方，避免左右擠在一起 */
-@media (max-width: 768px) {
+/*@media (max-width: 768px) {
     body {
         flex-direction: column;
     }
@@ -135,4 +192,4 @@ body {
         flex-direction: row;
         flex-wrap: wrap;
     }
-}
+}*/

@@ -3,14 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StudyFlow</title>
+    <title>Study Hub</title>
     <link rel="stylesheet" href="styles.css">
+
+    <!--引入FullCalendar的JS套件(透過CDN)-->>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
 </head>
 <body>
     <!-- 左側：網站名稱 + 導覽選單 -->
     <aside class="sidebar">
         <div class="brand">
-            <p class="brand-name">StudyFlow</p>
+            <p class="brand-name">Study Hub</p>
             <p class="brand-desc">個人學習管理</p>
         </div>
 
@@ -35,20 +38,8 @@
         </header>
 
         <section class="page-body">
-            <div class="dashboard-cards">
-                <button class="dashboard-card" type="button">
-                    <h2>今日課程</h2>
-                    <p>查看今天的課程安排。</p>
-                </button>
-                <button class="dashboard-card" type="button">
-                    <h2>今日待辦</h2>
-                    <p>查看今天需要完成的事項。</p>
-                </button>
-                <button class="dashboard-card" type="button">
-                    <h2>今日學習時間</h2>
-                    <p>查看今天累積的學習時間。</p>
-                </button>
-            </div>
+            <!-- 給FullCalender渲染行事曆的容器 -->
+            <div id="calendar"></div>
         </section>
     </main>
 
