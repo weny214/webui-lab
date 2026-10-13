@@ -3,18 +3,7 @@ document.addEventListener("DOMContentLoaded", function () {
     // -----------------------------------------------------
     // 1. 處理右上角今日日期的顯示
     // -----------------------------------------------------
-    // 初始化 FullCalendar
-    /*const dateElement =  document.getElementById("today-date");
-    const calendar = new Date();
-    const dateText = calendar.toLocaleDateString("zh-TW", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-        weekday: "long"
-    });
-    dateElement.textContent = dateText;
-}*/
-try {
+    try {
         const dateElement = document.getElementById("today-date");
         if (dateElement) {
             const now = new Date();
@@ -30,81 +19,63 @@ try {
     } catch (error) {
         console.error("更新日期時發生錯誤：", error);
     }
-// -----------------------------------------------------
-// 2. 初始化 FullCalendar 行事曆
-// ------------------------------------------------.-----
-/*const calendarEl = document.getElementById("calendar");
-const calendar = new FullCalendar.Calendar(calendarEl, {
-    initialView: "dayGridMonth",
-    locale: "zh-tw", // 設定語言為中文
-    headerToolbar: {
-        left: "prev,next today",
-        center: "title",
-        right: "dayGridMonth,timeGridWeek,timeGridDay,listWeek"
-    },
-    
-    buttonText: {
-        today: "今天",
-        month: "月",
-        week: "週",
-        day: "日"
-    },
-    firstDay: 1, // 設定一週的第一天為星期一
-    
-    height: "100%", // 自動調整高度
+    // -----------------------------------------------------
+    // 2. 初始化 FullCalendar 行事曆
+    // ------------------------------------------------.-----
+    try {
+        const calendarEl = document.getElementById('calendar');
+        const sidebarToggle = document.getElementById("sidebar-toggle");
 
-    events: [
-        {
-            title: "資料結構 期中考",
-            start: "2024-06-10",
-            color: "#ef4444" // 自訂事件顏色
-        },
-        {
-            title: "微算機實驗",
-            start: "2024-06-15T14:00:00",
-            end: "2024-06-15T16:00:00",
-            color: "#3b82f6" // 自訂事件顏色
-        }
-    ]
-});
+        if(sidebarToggle && sidebar) {
+            sidebarToggle.addEventListener("click", function () {
+                //如果sidebar有is-collapsed這個class就移除，沒有就加上
+                sidebar.classList.toggle("is-collapsed");
 
-calendar.render();
-*/
-try {
+                //延遲一下讓側邊欄動畫完成再跑，衝重新計算行事曆尺寸，避免破圖
+                SetTimeout(() => {
+                    if (window.calendarApp) {
+                        window.calendarApp.updateSize();
+                    }
+                }, 300); // 300毫秒延遲，與CSS動畫時間一致
+            });
+        }       
+    } catch (error) {
+        console.error("初始化行事曆時發生錯誤：", error);
+    }
+    // -----------------------------------------------------
+    //  3. 側邊欄收折切換功能
+    //  -----------------------------------------------------
+    try {
         const calendarEl = document.getElementById('calendar');
         
-        if (!calendarEl) {
-            console.error("找不到 ID 為 'calendar' 的元素！");
-            return;
+        if (calendarEl && typeof FullCalendar !== 'undefined') {
+            window.calendarApp = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                locale: 'zh-tw', 
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                },
+                buttonText: {
+                    today: '今天',
+                    month: '月',
+                    week: '週',
+                    day: '日'
+                },
+                firstDay: 1,
+                height: '100%',
+                events: [
+                    {
+                        title: '測試行程',
+                        start: new Date().toISOString().split('T')[0]
+                    }
+                ]
+            });
+            window.calendarApp.render();
+        } else {
+            console.error("行事曆容器不存在或 FullCalendar 尚未載入。");
         }
-
-        const calendar = new FullCalendar.Calendar(calendarEl, {
-            initialView: 'dayGridMonth',
-            locale: 'zh-tw', 
-            headerToolbar: {
-                left: 'prev,next today',
-                center: 'title',
-                right: 'dayGridMonth,timeGridWeek,timeGridDay'
-            },
-            buttonText: {
-                today: '今天',
-                month: '月',
-                week: '週',
-                day: '日'
-            },
-            firstDay: 1,
-            height: '100%',
-            events: [
-                {
-                    title: '測試行程',
-                    start: new Date().toISOString().split('T')[0] // 會在今天顯示一個測試行程
-                }
-            ]
-        });
-
-        calendar.render();
-        console.log("行事曆渲染成功！");
-
     } catch (error) {
         console.error("初始化行事曆時發生錯誤：", error);
     }

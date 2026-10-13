@@ -18,7 +18,7 @@
         </div>
 
         <nav class="nav">
-            <a class="nav-link is-active" href="#">儀表板</a>
+            <a class="nav-link is-active" href="#">儀錶板</a>
             <a class="nav-link" href="#">課程</a>
             <a class="nav-link" href="#">作業</a>
             <a class="nav-link" href="#">行事曆</a>
@@ -32,14 +32,18 @@
     <!-- 右側：目前頁面內容 -->
     <main class="main">
         <header class="page-header">
-            <h1>儀表板</h1>
+            <div class="header-left">
+                <!-- 收折按鈕 -->
+                <button id="sidebar-toggle" class="toggle-btn">☰</button>
+                <h1>Calendar</h1>
+            </div>
             <!-- 日期會由 script.js 填入 -->
             <p id="today-date" class="today-date">載入日期中…</p>
         </header>
 
+        <!-- 主要日曆區塊 -->
         <section class="page-body">
-            <!-- 給FullCalender渲染行事曆的容器 -->
-            <div id="calendar"></div>
+            <div id='calendar'></div>
         </section>
     </main>
 
