@@ -1,96 +1,25 @@
-/* 重置基本樣式 */
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-    font-family: sans-serif;
-}
-
+/* Study Hub 自定義奶咖色系樣式 */
 body {
-    display: flex;
-    height: 100vh;
-    background-color: #f3f4f6;
-    overflow: hidden; /* 避免出現滾動條 */
+    background-color: #FDFBF7;
+    color: #4A3B32;
 }
 
-/* 側邊欄設計 */
-aside {
-    width: 260px;
-    background-color: #202123;
-    color: white;
-    display: flex;
-    flex-direction: column;
-    transition: margin-left 0.3s ease;/* 讓側邊欄有滑動效果 */
-}
-.sidebar .nav {
-    padding: 0 20px 20px 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+.bg-coffee-light { 
+    background-color: #F5EBE6; 
 }
 
-.sidebar a {
-    color: #ececf1;
-    text-decoration: none;
-    padding: 8px 12px;
-    border-radius: 4px;
-}
-.sidebar a:hover, .sidebar a.is-active {
-    background-color: #343541;
+.bg-coffee-main { 
+    background-color: #D8C4B6; 
 }
 
-/* 新增:側邊欄收折時的class(透過margin往左推260px達到隱藏的效果) */
-aside.is-collapsed {
-    margin-left: -260px;
-}
-/* 主要內容區 */
-main {
-    flex: 1;/* 讓主要內容區撐滿剩餘空間 */
-    display: flex;
-    flex-direction: column;
-    min-width: 0;/* 關鍵防止Flex內部的元素撐破容器*/
-}
-.page-header {
-    padding: 20px;
-    background-color: white;
-    border-bottom: 1px solid #e5e7eb;
-    display: flex;
-    justify-content: space-between;/* 讓標題和日期分左右 */
-    align-items: center;/* 讓標題和日期垂直置中 */
+.bg-coffee-dark { 
+    background-color: #4A3B32; 
 }
 
-/* 新增頂部左側區塊與按鈕樣式 */
-.header-left {
-    display: flex;
-    align-items: center;
-    gap: 15px;
+.text-coffee-dark { 
+    color: #4A3B32; 
 }
 
-.toggle-btn {
-    background-color: none;
-    border: none;
-    font-size: 24px;
-    cursor: pointer;
-    color: #202123;
-    padding: 5px;
-    border-radius: 4px;
-    transition: background-color 0.2s ;
-}
-
-.toggle-btn:hover {
-    background-color: #f3f4f6;
-}
-
-.page-body {
-    flex: 1;
-    padding: 20px;
-    overflow-y: auto;/* 讓主要內容區可以滾動 */
-    background-color: #ffffff;/* 行事曆背景色改為白色 */
-    margin: 20px;/* 讓主要內容區與側邊欄有間距 */
-    border-radius: 8px;/* 主要內容區圓角 */
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);/* 主要內容區陰影 */
-}
-
-#calendar {
-    height: 100%;
+.text-coffee-accent { 
+        color: #8D7B68; 
 }

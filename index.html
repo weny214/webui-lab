@@ -3,50 +3,192 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Study Hub</title>
-    <link rel="stylesheet" href="styles.css">
-
-    <!--引入FullCalendar的JS套件(透過CDN)-->>
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+    <title>Study Hub | 個人學習管理平台</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- 引入外部樣式表 -->
+    <link rel="stylesheet" href="style.css">
 </head>
-<body>
-    <!-- 左側：網站名稱 + 導覽選單 -->
-    <aside class="sidebar">
-        <div class="brand">
-            <p class="brand-name">Study Hub</p>
-            <p class="brand-desc">個人學習管理</p>
-        </div>
+<body class="min-h-screen flex flex-col justify-between font-sans">
 
-        <nav class="nav">
-            <a class="nav-link is-active" href="#">儀錶板</a>
-            <a class="nav-link" href="#">課程</a>
-            <a class="nav-link" href="#">作業</a>
-            <a class="nav-link" href="#">行事曆</a>
-            <a class="nav-link" href="#">學習計時</a>
-            <a class="nav-link" href="#">番茄鐘</a>
-            <a class="nav-link" href="#">學習統計</a>
-            <a class="nav-link" href="#">學習計畫</a>
-        </nav>
-    </aside>
-
-    <!-- 右側：目前頁面內容 -->
-    <main class="main">
-        <header class="page-header">
-            <div class="header-left">
-                <!-- 收折按鈕 -->
-                <button id="sidebar-toggle" class="toggle-btn">☰</button>
-                <h1>Calendar</h1>
+    <!-- Header / Navbar -->
+    <header class="bg-[#F5EBE6] border-b border-[#E3D5C8] shadow-sm py-4 px-6 sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="bg-[#8D7B68] text-white p-2 rounded-xl shadow">
+                    <i class="fa-solid fa-graduation-cap text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-wide text-[#4A3B32]">Study Hub</h1>
+                    <p class="text-xs text-[#8D7B68]">個人學習與時間管理平台</p>
+                </div>
             </div>
-            <!-- 日期會由 script.js 填入 -->
-            <p id="today-date" class="today-date">載入日期中…</p>
-        </header>
+            <nav class="hidden md:flex space-x-2">
+                <button onclick="switchTab('dashboard')" id="nav-dashboard" class="px-4 py-2 rounded-lg font-medium text-sm transition bg-[#8D7B68] text-white">總覽儀表板</button>
+                <button onclick="switchTab('courses')" id="nav-courses" class="px-4 py-2 rounded-lg font-medium text-sm transition text-[#4A3B32] hover:bg-[#E3D5C8]">課程管理</button>
+                <button onclick="switchTab('todos')" id="nav-todos" class="px-4 py-2 rounded-lg font-medium text-sm transition text-[#4A3B32] hover:bg-[#E3D5C8]">待辦事項</button>
+                <button onclick="switchTab('calendar')" id="nav-calendar" class="px-4 py-2 rounded-lg font-medium text-sm transition text-[#4A3B32] hover:bg-[#E3D5C8]">行事曆</button>
+                <button onclick="switchTab('pomodoro')" id="nav-pomodoro" class="px-4 py-2 rounded-lg font-medium text-sm transition text-[#4A3B32] hover:bg-[#E3D5C8]">番茄鐘</button>
+            </nav>
+        </div>
+    </header>
 
-        <!-- 主要日曆區塊 -->
-        <section class="page-body">
-            <div id='calendar'></div>
+    <!-- Mobile Nav (Bottom) -->
+    <div class="md:hidden fixed bottom-0 left-0 right-0 bg-[#F5EBE6] border-t border-[#E3D5C8] flex justify-around py-3 z-50 shadow-lg">
+        <button onclick="switchTab('dashboard')" id="mob-dashboard" class="flex flex-col items-center text-xs text-[#8D7B68] font-bold"><i class="fa-solid fa-chart-pie text-lg mb-1"></i>總覽</button>
+        <button onclick="switchTab('courses')" id="mob-courses" class="flex flex-col items-center text-xs text-[#4A3B32]"><i class="fa-solid fa-book text-lg mb-1"></i>課程</button>
+        <button onclick="switchTab('todos')" id="mob-todos" class="flex flex-col items-center text-xs text-[#4A3B32]"><i class="fa-solid fa-list-check text-lg mb-1"></i>待辦</button>
+        <button onclick="switchTab('calendar')" id="mob-calendar" class="flex flex-col items-center text-xs text-[#4A3B32]"><i class="fa-solid fa-calendar-days text-lg mb-1"></i>行事曆</button>
+        <button onclick="switchTab('pomodoro')" id="mob-pomodoro" class="flex flex-col items-center text-xs text-[#4A3B32]"><i class="fa-solid fa-clock text-lg mb-1"></i>番茄鐘</button>
+    </div>
+
+    <!-- Main Container -->
+    <main class="max-w-6xl mx-auto px-4 py-6 w-full flex-grow mb-16 md:mb-0">
+
+        <!-- TAB 1: 總覽儀表板 (Dashboard) -->
+        <section id="tab-dashboard" class="space-y-6">
+            <div class="bg-[#F5EBE6] rounded-2xl p-6 shadow-sm border border-[#E3D5C8]">
+                <h2 class="text-2xl font-bold text-[#4A3B32] mb-1">歡迎回來！今天也要保持專注 ✨</h2>
+                <p class="text-sm text-[#7F6F60]">以下是您目前的學習進度與今日待辦概況。</p>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-[#E3D5C8] flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-stone-500 font-medium">已完成任務</p>
+                        <h3 id="stat-completed" class="text-3xl font-extrabold text-[#8D7B68] mt-1">0 / 0</h3>
+                    </div>
+                    <div class="bg-[#F5EBE6] p-3 rounded-full text-[#8D7B68]"><i class="fa-solid fa-check-double text-xl"></i></div>
+                </div>
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-[#E3D5C8] flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-stone-500 font-medium">註冊課程數</p>
+                        <h3 id="stat-courses" class="text-3xl font-extrabold text-[#8D7B68] mt-1">0</h3>
+                    </div>
+                    <div class="bg-[#F5EBE6] p-3 rounded-full text-[#8D7B68]"><i class="fa-solid fa-book-open text-xl"></i></div>
+                </div>
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-[#E3D5C8] flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-stone-500 font-medium">累積專注時間</p>
+                        <h3 id="stat-focus-time" class="text-3xl font-extrabold text-[#8D7B68] mt-1">0 分鐘</h3>
+                    </div>
+                    <div class="bg-[#F5EBE6] p-3 rounded-full text-[#8D7B68]"><i class="fa-solid fa-stopwatch text-xl"></i></div>
+                </div>
+            </div>
+
+            <!-- Quick Overview Lists -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-[#E3D5C8]">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-[#4A3B32]"><i class="fa-solid fa-bell mr-2 text-[#8D7B68]"></i>近期待辦預覽</h3>
+                        <button onclick="switchTab('todos')" class="text-xs text-[#8D7B68] font-semibold hover:underline">查看全部</button>
+                    </div>
+                    <div id="dash-todo-list" class="space-y-2"></div>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-[#E3D5C8]">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-[#4A3B32]"><i class="fa-solid fa-bookmark mr-2 text-[#8D7B68]"></i>我的課程清單</h3>
+                        <button onclick="switchTab('courses')" class="text-xs text-[#8D7B68] font-semibold hover:underline">管理課程</button>
+                    </div>
+                    <div id="dash-course-list" class="space-y-2"></div>
+                </div>
+            </div>
         </section>
+
+        <!-- TAB 2: 課程管理 (Courses) -->
+        <section id="tab-courses" class="hidden space-y-6">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-[#E3D5C8]">
+                <h2 class="text-xl font-bold text-[#4A3B32] mb-4"><i class="fa-solid fa-book-bookmark mr-2 text-[#8D7B68]"></i>新增課程</h2>
+                <form id="course-form" onsubmit="addCourse(event)" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <input type="text" id="course-name" placeholder="輸入課程名稱 (例如: 資料結構)" required class="border border-[#E3D5C8] p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8D7B68] bg-[#FDFBF7]">
+                    <select id="course-color" class="border border-[#E3D5C8] p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8D7B68] bg-[#FDFBF7]">
+                        <option value="#8D7B68">經典奶咖色</option>
+                        <option value="#BC6C25">大地琥珀色</option>
+                        <option value="#606C38">溫潤墨綠色</option>
+                        <option value="#283618">深林苔綠色</option>
+                    </select>
+                    <button type="submit" class="bg-[#8D7B68] text-white font-bold py-3 px-4 rounded-lg hover:bg-[#726352] transition shadow-sm">新增課程</button>
+                </form>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-[#E3D5C8]">
+                <h2 class="text-xl font-bold text-[#4A3B32] mb-4">課程列表</h2>
+                <div id="course-list-container" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            </div>
+        </section>
+
+        <!-- TAB 3: 待辦事項 (Todos) -->
+        <section id="tab-todos" class="hidden space-y-6">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-[#E3D5C8]">
+                <h2 class="text-xl font-bold text-[#4A3B32] mb-4"><i class="fa-solid fa-list-check mr-2 text-[#8D7B68]"></i>新增學習任務</h2>
+                <form id="todo-form" onsubmit="addTodo(event)" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <input type="text" id="todo-text" placeholder="輸入任務內容 (例如: 完成作業5)" required class="border border-[#E3D5C8] p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8D7B68] bg-[#FDFBF7] md:col-span-2">
+                    <input type="date" id="todo-date" required class="border border-[#E3D5C8] p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8D7B68] bg-[#FDFBF7]">
+                    <button type="submit" class="bg-[#8D7B68] text-white font-bold py-3 px-4 rounded-lg hover:bg-[#726352] transition shadow-sm">新增任務</button>
+                </form>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-[#E3D5C8]">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold text-[#4A3B32]">任務清單</h2>
+                    <span id="todo-count" class="text-xs text-stone-500 font-medium">共 0 項任務</span>
+                </div>
+                <div id="todo-list-container" class="space-y-3"></div>
+            </div>
+        </section>
+
+        <!-- TAB 4: 行事曆 (Calendar) -->
+        <section id="tab-calendar" class="hidden space-y-6">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-[#E3D5C8]">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 id="calendar-month-title" class="text-xl font-bold text-[#4A3B32]">2026年 10月</h2>
+                    <div class="space-x-2">
+                        <button onclick="changeMonth(-1)" class="px-3 py-1.5 bg-[#F5EBE6] text-[#4A3B32] rounded-lg hover:bg-[#E3D5C8] transition text-sm font-medium"><i class="fa-solid fa-chevron-left"></i> 上個月</button>
+                        <button onclick="changeMonth(1)" class="px-3 py-1.5 bg-[#F5EBE6] text-[#4A3B32] rounded-lg hover:bg-[#E3D5C8] transition text-sm font-medium">下個月 <i class="fa-solid fa-chevron-right"></i></button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-7 gap-2 text-center font-bold text-sm text-[#8D7B68] mb-2">
+                    <div>日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div>
+                </div>
+
+                <div id="calendar-grid" class="grid grid-cols-7 gap-2">
+                    <!-- 動態產生日期格子 -->
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 5: 番茄鐘計時器 (Pomodoro) -->
+        <section id="tab-pomodoro" class="hidden space-y-6">
+            <div class="bg-white p-8 rounded-2xl shadow-sm border border-[#E3D5C8] max-w-md mx-auto text-center space-y-6">
+                <div class="flex justify-center space-x-2">
+                    <button onclick="setTimerMode('focus')" id="mode-focus" class="px-4 py-1.5 rounded-full text-xs font-bold bg-[#8D7B68] text-white transition">專注 (25m)</button>
+                    <button onclick="setTimerMode('break')" id="mode-break" class="px-4 py-1.5 rounded-full text-xs font-bold bg-[#F5EBE6] text-[#4A3B32] transition">休息 (5m)</button>
+                </div>
+
+                <div class="text-6xl md:text-7xl font-mono font-extrabold text-[#4A3B32] tracking-wider my-6" id="timer-display">
+                    25:00
+                </div>
+
+                <div class="flex justify-center space-x-4">
+                    <button onclick="toggleTimer()" id="timer-toggle-btn" class="bg-[#8D7B68] text-white font-bold py-3 px-8 rounded-xl hover:bg-[#726352] transition shadow-sm">開始專注</button>
+                    <button onclick="resetTimer()" class="bg-[#E3D5C8] text-[#4A3B32] font-medium py-3 px-6 rounded-xl hover:bg-[#d0c2b5] transition">重設</button>
+                </div>
+                <p class="text-xs text-stone-500">完成一個番茄鐘將自動累積您的專注時間！</p>
+            </div>
+        </section>
+
     </main>
 
+    <!-- Footer -->
+    <footer class="bg-[#F5EBE6] border-t border-[#E3D5C8] text-stone-500 text-center py-4 text-xs mt-12">
+        <p>Study Hub &copy; 2026 | Vibe Coding Homework 5</p>
+    </footer>
+
+    <!-- 引入外部 JavaScript 檔案 -->
     <script src="script.js"></script>
 </body>
 </html>
