@@ -140,24 +140,32 @@
             </div>
         </section>
 
-        <!-- TAB 4: 行事曆 (Calendar) -->
+        <!-- TAB 4: Google 風格多檢視行事曆 (Calendar) -->
         <section id="tab-calendar" class="hidden space-y-6">
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-[#E3D5C8]">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 id="calendar-month-title" class="text-xl font-bold text-[#4A3B32]">2026年 10月</h2>
-                    <div class="space-x-2">
-                        <button onclick="changeMonth(-1)" class="px-3 py-1.5 bg-[#F5EBE6] text-[#4A3B32] rounded-lg hover:bg-[#E3D5C8] transition text-sm font-medium"><i class="fa-solid fa-chevron-left"></i> 上個月</button>
-                        <button onclick="changeMonth(1)" class="px-3 py-1.5 bg-[#F5EBE6] text-[#4A3B32] rounded-lg hover:bg-[#E3D5C8] transition text-sm font-medium">下個月 <i class="fa-solid fa-chevron-right"></i></button>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-[#E3D5C8] space-y-4">
+                
+                <!-- 頂部導航與檢視切換列 -->
+                <div class="flex flex-col md:flex-row justify-between items-center gap-4 border-b border-[#E3D5C8] pb-4">
+                    <div class="flex items-center space-x-4">
+                        <h2 id="calendar-title" class="text-xl font-bold text-[#4A3B32]">2026年 10月</h2>
+                        <div class="space-x-1">
+                            <button onclick="navigateCalendar(-1)" class="p-2 bg-[#F5EBE6] text-[#4A3B32] rounded-lg hover:bg-[#E3D5C8] transition text-sm"><i class="fa-solid fa-chevron-left"></i></button>
+                            <button onclick="setTodayCalendar()" class="px-3 py-1.5 bg-[#F5EBE6] text-[#4A3B32] rounded-lg hover:bg-[#E3D5C8] transition text-sm font-medium">今天</button>
+                            <button onclick="navigateCalendar(1)" class="p-2 bg-[#F5EBE6] text-[#4A3B32] rounded-lg hover:bg-[#E3D5C8] transition text-sm"><i class="fa-solid fa-chevron-right"></i></button>
+                        </div>
+                    </div>
+
+                    <div class="flex bg-[#F5EBE6] p-1 rounded-xl">
+                        <button onclick="setCalendarView('year')" id="view-btn-year" class="px-3 py-1.5 rounded-lg text-xs font-bold transition text-[#4A3B32]">年</button>
+                        <button onclick="setCalendarView('month')" id="view-btn-month" class="px-3 py-1.5 rounded-lg text-xs font-bold transition bg-[#8D7B68] text-white">月</button>
+                        <button onclick="setCalendarView('week')" id="view-btn-week" class="px-3 py-1.5 rounded-lg text-xs font-bold transition text-[#4A3B32]">週</button>
+                        <button onclick="setCalendarView('day')" id="view-btn-day" class="px-3 py-1.5 rounded-lg text-xs font-bold transition text-[#4A3B32]">日</button>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-7 gap-2 text-center font-bold text-sm text-[#8D7B68] mb-2">
-                    <div>日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div>
-                </div>
+                <!-- 內容檢視區塊 -->
+                <div id="calendar-view-container"></div>
 
-                <div id="calendar-grid" class="grid grid-cols-7 gap-2">
-                    <!-- 動態產生日期格子 -->
-                </div>
             </div>
         </section>
 
@@ -182,6 +190,58 @@
         </section>
 
     </main>
+
+    <!-- 互動式新增行程 Modal 視窗 -->
+    <div id="event-modal" class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4">
+        <div class="bg-[#FDFBF7] rounded-2xl p-6 w-full max-w-md border border-[#E3D5C8] shadow-xl space-y-4">
+            <div class="flex justify-between items-center border-b border-[#E3D5C8] pb-3">
+                <h3 class="font-bold text-lg text-[#4A3B32]"><i class="fa-solid fa-calendar-plus mr-2 text-[#8D7B68]"></i>新增時間軸行程</h3>
+                <button onclick="closeEventModal()" class="text-stone-400 hover:text-stone-700"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            
+            <form id="event-form" onsubmit="handleEventSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-stone-600 mb-1">行程名稱</label>
+                    <input type="text" id="modal-event-title" placeholder="例如: 演算法線上討論" required class="w-full border border-[#E3D5C8] p-2.5 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#8D7B68]">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-stone-600 mb-1">行程類型</label>
+                        <select id="modal-event-type" class="w-full border border-[#E3D5C8] p-2.5 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#8D7B68]">
+                            <option value="task">作業 / 任務</option>
+                            <option value="course">課程</option>
+                            <option value="event">一般活動</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-stone-600 mb-1">重複頻率</label>
+                        <select id="modal-event-repeat" class="w-full border border-[#E3D5C8] p-2.5 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#8D7B68]">
+                            <option value="once">僅一次</option>
+                            <option value="daily">每天重複</option>
+                            <option value="weekly">每週重複</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-stone-600 mb-1">日期</label>
+                        <input type="date" id="modal-event-date" required class="w-full border border-[#E3D5C8] p-2.5 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#8D7B68]">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-stone-600 mb-1">時間</label>
+                        <input type="time" id="modal-event-time" required class="w-full border border-[#E3D5C8] p-2.5 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#8D7B68]">
+                    </div>
+                </div>
+
+                <div class="flex justify-end space-x-3 pt-2">
+                    <button type="button" onclick="closeEventModal()" class="px-4 py-2 rounded-lg bg-stone-200 text-stone-700 text-sm font-medium hover:bg-stone-300 transition">取消</button>
+                    <button type="submit" class="px-4 py-2 rounded-lg bg-[#8D7B68] text-white text-sm font-bold hover:bg-[#726352] transition shadow-sm">儲存行程</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <!-- Footer -->
     <footer class="bg-[#F5EBE6] border-t border-[#E3D5C8] text-stone-500 text-center py-4 text-xs mt-12">
