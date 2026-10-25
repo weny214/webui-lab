@@ -1,5 +1,7 @@
 # 依賴套件 —— 這個資料夾會有上萬個檔案，絕不能進git
 node_modules/
+venv/
+__pycache__/
 
 # 建置產物
 dist/
