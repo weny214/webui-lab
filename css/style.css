@@ -23,3 +23,6 @@ body {
 .text-coffee-accent { 
     color: #8D7B68; 
 }
+/* Auth visibility must override utility display classes. */
+[hidden] { display: none !important; }
+button:disabled { opacity: .55; cursor: wait; }

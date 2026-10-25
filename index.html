@@ -24,7 +24,7 @@
                     <p class="text-xs text-[#8D7B68]">個人學習與時間管理平台</p>
                 </div>
             </div>
-            <nav class="hidden md:flex space-x-2">
+            <nav data-auth-required hidden class="hidden md:flex space-x-2">
                 <button onclick="switchTab('dashboard')" id="nav-dashboard" class="px-4 py-2 rounded-lg font-medium text-sm transition bg-[#8D7B68] text-white">總覽儀表板</button>
                 <button onclick="switchTab('courses')" id="nav-courses" class="px-4 py-2 rounded-lg font-medium text-sm transition text-[#4A3B32] hover:bg-[#E3D5C8]">課程管理</button>
                 <button onclick="switchTab('todos')" id="nav-todos" class="px-4 py-2 rounded-lg font-medium text-sm transition text-[#4A3B32] hover:bg-[#E3D5C8]">待辦事項</button>
@@ -35,7 +35,7 @@
     </header>
 
     <!-- Mobile Nav (Bottom) -->
-    <div class="md:hidden fixed bottom-0 left-0 right-0 bg-[#F5EBE6] border-t border-[#E3D5C8] flex justify-around py-3 z-50 shadow-lg">
+    <div data-auth-required hidden class="md:hidden fixed bottom-0 left-0 right-0 bg-[#F5EBE6] border-t border-[#E3D5C8] flex justify-around py-3 z-50 shadow-lg">
         <button onclick="switchTab('dashboard')" id="mob-dashboard" class="flex flex-col items-center text-xs text-[#8D7B68] font-bold"><i class="fa-solid fa-chart-pie text-lg mb-1"></i>總覽</button>
         <button onclick="switchTab('courses')" id="mob-courses" class="flex flex-col items-center text-xs text-[#4A3B32]"><i class="fa-solid fa-book text-lg mb-1"></i>課程</button>
         <button onclick="switchTab('todos')" id="mob-todos" class="flex flex-col items-center text-xs text-[#4A3B32]"><i class="fa-solid fa-list-check text-lg mb-1"></i>待辦</button>
@@ -43,8 +43,29 @@
         <button onclick="switchTab('pomodoro')" id="mob-pomodoro" class="flex flex-col items-center text-xs text-[#4A3B32]"><i class="fa-solid fa-clock text-lg mb-1"></i>番茄鐘</button>
     </div>
 
+    <section id="auth-panel" class="max-w-md mx-auto w-full p-6">
+      <h2 class="text-xl font-bold mb-4">登入 Study Hub</h2>
+      <p class="mb-4 text-sm">課程資料儲存在雲端，登入後可跨電腦讀取。</p>
+      <form id="auth-form" class="space-y-3">
+        <label for="auth-email">Email</label>
+        <input id="auth-email" type="email" autocomplete="email" required maxlength="254" class="border rounded p-3 w-full">
+        <label for="auth-password">密碼</label>
+        <input id="auth-password" type="password" autocomplete="current-password" required minlength="8" class="border rounded p-3 w-full">
+        <p class="text-xs">密碼至少 8 個字元。註冊後請先完成信箱驗證。</p>
+        <button type="submit" value="login" class="bg-[#8D7B68] text-white rounded p-3">登入</button>
+        <button type="submit" value="signup" class="border rounded p-3">註冊</button>
+      </form>
+      <p id="auth-message" role="status" aria-live="polite" class="mt-4"></p>
+    </section>
+    <section id="account-panel" hidden class="max-w-6xl mx-auto w-full px-4 pt-4">
+      <span id="account-email"></span>
+      <button id="logout-button" type="button" class="border rounded px-3 py-1">登出</button>
+      <p class="text-sm mt-2">本階段：課程已接雲端；待辦、行事曆與專注時間仍只存在此瀏覽器，按帳號分開保存。</p>
+      <p id="course-status" role="status" aria-live="polite" class="mt-2"></p>
+      <button id="course-reload" type="button" class="border rounded px-3 py-1">重新讀取雲端課程</button>
+    </section>
     <!-- Main Container -->
-    <main class="max-w-6xl mx-auto px-4 py-6 w-full flex-grow mb-16 md:mb-0">
+    <main data-auth-required hidden class="max-w-6xl mx-auto px-4 py-6 w-full flex-grow mb-16 md:mb-0">
 
         <!-- TAB 1: 總覽儀表板 (Dashboard) -->
         <section id="tab-dashboard" class="space-y-6">
@@ -103,14 +124,17 @@
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-[#E3D5C8]">
                 <h2 class="text-xl font-bold text-[#4A3B32] mb-4"><i class="fa-solid fa-book-bookmark mr-2 text-[#8D7B68]"></i>新增課程</h2>
                 <form id="course-form" onsubmit="addCourse(event)" class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <input type="text" id="course-name" placeholder="輸入課程名稱 (例如: 資料結構)" required class="border border-[#E3D5C8] p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8D7B68] bg-[#FDFBF7]">
-                    <select id="course-color" class="border border-[#E3D5C8] p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8D7B68] bg-[#FDFBF7]">
+                    <input type="hidden" id="course-id"><label class="sr-only" for="course-name">課程名稱</label><input maxlength="100" type="text" id="course-name" placeholder="輸入課程名稱 (例如: 資料結構)" required class="border border-[#E3D5C8] p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8D7B68] bg-[#FDFBF7]">
+                    <label class="sr-only" for="course-color">課程顏色</label><select id="course-color" class="border border-[#E3D5C8] p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8D7B68] bg-[#FDFBF7]">
                         <option value="#8D7B68">經典奶咖色</option>
                         <option value="#BC6C25">大地琥珀色</option>
                         <option value="#606C38">溫潤墨綠色</option>
                         <option value="#283618">深林苔綠色</option>
                     </select>
-                    <button type="submit" class="bg-[#8D7B68] text-white font-bold py-3 px-4 rounded-lg hover:bg-[#726352] transition shadow-sm">新增課程</button>
+                    <label>教師<input id="course-teacher" maxlength="100" class="border p-3 rounded-lg w-full" type="text"></label>
+                    <label>教室<input id="course-classroom" maxlength="100" class="border p-3 rounded-lg w-full" type="text"></label>
+                    <button id="course-submit" type="submit" class="bg-[#8D7B68] text-white font-bold p-3 rounded-lg">新增課程</button>
+                    <button id="course-cancel" type="button" class="border p-3 rounded-lg" hidden>取消編輯</button>
                 </form>
             </div>
 
@@ -249,6 +273,10 @@
     </footer>
 
     <!-- 引入外部 JavaScript 檔案 -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.js"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/course-service.js"></script>
     <script src="script.js"></script>
+    <script src="js/auth.js"></script>
 </body>
 </html>

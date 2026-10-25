@@ -1,0 +1,7 @@
+{
+  "name": "study-hub",
+  "private": true,
+  "scripts": {
+    "test": "node tests/auth-courses-unit.cjs"
+  }
+}
