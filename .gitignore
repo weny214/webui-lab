@@ -20,3 +20,11 @@ Thumbs.db
 # 日誌
 *.log
 npm-debug.log*
+# Python virtual environments
+.venv/
+.venv~/
+venv/
+
+# Python cache
+__pycache__/
+*.py[cod]

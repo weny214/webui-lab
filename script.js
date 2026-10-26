@@ -1,28 +1,27 @@
-// Data States & LocalStorage
-let courses = JSON.parse(localStorage.getItem('studyhub_courses')) || [
-    { id: 1, name: '深度學習與電腦視覺', color: '#8D7B68' },
-    { id: 2, name: '區塊鏈技術原理', color: '#BC6C25' }
-];
-
-let todos = JSON.parse(localStorage.getItem('studyhub_todos')) || [
-    { id: 1, text: '完成 Homework 5 專案部署', date: '2026-10-19', completed: false },
-    { id: 2, text: '準備微電腦系統實驗報告', date: '2026-10-22', completed: true }
-];
-
-// 新增：行事曆專屬行程（支援時間與重複設定）
-let calendarEvents = JSON.parse(localStorage.getItem('studyhub_calendar_events')) || [
-    { id: 1, title: '深度學習課堂專題', date: '2026-10-21', time: '14:00', type: 'course', repeat: 'weekly' },
-    { id: 2, title: '小組程式碼檢討', date: '2026-10-21', time: '10:00', type: 'event', repeat: 'once' }
-];
-
-let focusMinutesTotal = parseInt(localStorage.getItem('studyhub_focus_time')) || 0;
+// Courses are cloud data. Other modules remain per-user local data.
+let courses = [];
+let todos = [];
+let calendarEvents = [];
+let focusMinutesTotal = 0;
+let localOwner = null;
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function loadLocalFeatures(userId) {
+  localOwner = userId || null;
+  let data = {};
+  try { data = JSON.parse(localStorage.getItem('studyhub_local_' + userId)) || {}; } catch {}
+  todos = userId && Array.isArray(data.todos) ? data.todos : [];
+  calendarEvents = userId && Array.isArray(data.calendarEvents) ? data.calendarEvents : [];
+  focusMinutesTotal = userId && Number.isFinite(data.focusMinutesTotal) ? data.focusMinutesTotal : 0;
+}
 
 // Save data helper
 function saveData() {
-    localStorage.setItem('studyhub_courses', JSON.stringify(courses));
-    localStorage.setItem('studyhub_todos', JSON.stringify(todos));
-    localStorage.setItem('studyhub_calendar_events', JSON.stringify(calendarEvents));
-    localStorage.setItem('studyhub_focus_time', focusMinutesTotal);
+    if (!localOwner) return;
+    try {
+        localStorage.setItem('studyhub_local_' + localOwner, JSON.stringify({todos, calendarEvents, focusMinutesTotal}));
+    } catch { alert('本機儲存失敗，請保留輸入內容；目前變更可能在重新整理後遺失。'); }
     updateDashboard();
     
     const calendarTab = document.getElementById('tab-calendar');
@@ -62,22 +61,22 @@ function switchTab(tabId) {
 function updateDashboard() {
     const completedCount = todos.filter(t => t.completed).length;
     document.getElementById('stat-completed').textContent = `${completedCount} / ${todos.length}`;
-    document.getElementById('stat-courses').textContent = courses.length;
+    document.getElementById('stat-courses').textContent = courses.filter(c => !c.deleted_at).length;
     document.getElementById('stat-focus-time').textContent = `${focusMinutesTotal} 分鐘`;
 
     const dashTodoList = document.getElementById('dash-todo-list');
     dashTodoList.innerHTML = todos.slice(0, 3).map(t => `
         <div class="flex items-center justify-between p-2.5 bg-[#FDFBF7] rounded-lg border border-[#E3D5C8]">
-            <span class="text-sm ${t.completed ? 'line-through text-stone-400' : 'text-[#4A3B32]'}">${t.text}</span>
+            <span class="text-sm ${t.completed ? 'line-through text-stone-400' : 'text-[#4A3B32]'}">${escapeHtml(t.text)}</span>
             <span class="text-xs text-stone-400">${t.date}</span>
         </div>
     `).join('') || '<p class="text-xs text-stone-400">目前沒有待辦事項</p>';
 
     const dashCourseList = document.getElementById('dash-course-list');
-    dashCourseList.innerHTML = courses.slice(0, 3).map(c => `
+    dashCourseList.innerHTML = courses.filter(c => !c.deleted_at).slice(0, 3).map(c => `
         <div class="flex items-center space-x-3 p-2.5 bg-[#FDFBF7] rounded-lg border border-[#E3D5C8]">
             <span class="w-3 h-3 rounded-full" style="background-color: ${c.color}"></span>
-            <span class="text-sm font-medium text-[#4A3B32]">${c.name}</span>
+            <span class="text-sm font-medium text-[#4A3B32]">${escapeHtml(c.name)}</span>
         </div>
     `).join('') || '<p class="text-xs text-stone-400">目前沒有註冊課程</p>';
 
@@ -85,32 +84,85 @@ function updateDashboard() {
     renderTodos();
 }
 
-// Courses Logic
-function addCourse(e) {
-    e.preventDefault();
-    const name = document.getElementById('course-name').value;
-    const color = document.getElementById('course-color').value;
-    courses.push({ id: Date.now(), name, color });
-    document.getElementById('course-form').reset();
-    saveData();
+// Courses: submit -> service -> cloud result -> DOM.
+function resetCourseForm() {
+  document.getElementById('course-form').reset();
+  document.getElementById('course-id').value = '';
+  document.getElementById('course-submit').textContent = '新增課程';
+  document.getElementById('course-cancel').hidden = true;
 }
-
-function deleteCourse(id) {
-    courses = courses.filter(c => c.id !== id);
-    saveData();
+async function addCourse(event) {
+  event.preventDefault();
+  if (!currentUser || courseBusy) return;
+  if (!courseReady) {reportCourseError(new Error('請先成功載入雲端課程')); return;}
+  const epoch = authEpoch;
+  const id = document.getElementById('course-id').value;
+  const values = {
+    name:document.getElementById('course-name').value.trim(),
+    color:document.getElementById('course-color').value,
+    teacher:document.getElementById('course-teacher').value.trim(),
+    classroom:document.getElementById('course-classroom').value.trim()
+  };
+  if (!values.name) {reportCourseError(new Error('課程名稱不能只有空白'));return;}
+  courseBusy = true;
+  document.getElementById('course-submit').disabled = true;
+  try {
+    const row = id ? await courseService.update(id,values) : await courseService.create(currentUser.id,values);
+    if (epoch !== authEpoch) return;
+    courses = id ? courses.map(c => c.id === id ? row : c) : [...courses,row];
+    resetCourseForm();
+    updateDashboard();
+    document.getElementById('course-status').textContent = '課程已儲存至雲端。';
+  } catch(error) {if (epoch === authEpoch) reportCourseError(error);}
+  finally {courseBusy = false;document.getElementById('course-submit').disabled = false;}
 }
-
+function editCourse(id) {
+  const row = courses.find(c => c.id === id && !c.deleted_at);
+  if (!row || courseBusy) return;
+  for (const field of ['id','name','color','teacher','classroom']) {
+    document.getElementById('course-' + field).value = row[field] || '';
+  }
+  document.getElementById('course-submit').textContent = '儲存修改';
+  document.getElementById('course-cancel').hidden = false;
+  document.getElementById('course-name').focus();
+}
+async function deleteCourse(id) {
+  if (!currentUser || courseBusy || !confirm('將課程標記為已刪除並保留歷史資料。本階段本機行程尚未建立課程關聯，不會自動刪除。確定繼續？')) return;
+  const epoch = authEpoch;
+  courseBusy = true;
+  try {
+    const row = await courseService.update(id,{deleted_at:new Date().toISOString()});
+    if (epoch !== authEpoch) return;
+    courses = courses.map(c => c.id === id ? row : c);
+    if (document.getElementById('course-id').value === id) resetCourseForm();
+    updateDashboard();
+    document.getElementById('course-status').textContent = '課程已標記為刪除。';
+  } catch(error) {if (epoch === authEpoch) reportCourseError(error);}
+  finally {courseBusy = false;}
+}
 function renderCourses() {
-    const container = document.getElementById('course-list-container');
-    container.innerHTML = courses.map(c => `
-        <div class="flex items-center justify-between p-4 bg-[#FDFBF7] rounded-xl border border-[#E3D5C8] shadow-sm">
-            <div class="flex items-center space-x-3">
-                <span class="w-4 h-4 rounded-full shadow-sm" style="background-color: ${c.color}"></span>
-                <span class="font-bold text-[#4A3B32]">${c.name}</span>
-            </div>
-            <button onclick="deleteCourse(${c.id})" class="text-stone-400 hover:text-red-500 transition text-sm"><i class="fa-solid fa-trash"></i></button>
-        </div>
-    `).join('') || '<p class="text-stone-400 text-sm">尚無課程資料。</p>';
+  const container = document.getElementById('course-list-container');
+  container.replaceChildren();
+  for (const course of courses.filter(c => !c.deleted_at)) {
+    const card = document.createElement('article');
+    card.className = 'border rounded-xl p-4 space-y-2';
+    card.style.borderLeft = '6px solid ' + course.color;
+    const heading = document.createElement('h3');
+    heading.className = 'font-bold';
+    heading.textContent = course.name;
+    const info = document.createElement('p');
+    info.textContent = '教師：' + (course.teacher || '未填') + ' · 教室：' + (course.classroom || '未填');
+    card.append(heading,info);
+    for (const [label,action] of [['編輯',editCourse],['刪除',deleteCourse]]) {
+      const button = document.createElement('button');
+      button.type = 'button';button.textContent = label;
+      button.className = 'border rounded px-3 py-1 mr-2';
+      button.addEventListener('click',() => action(course.id));
+      card.append(button);
+    }
+    container.append(card);
+  }
+  if (!container.children.length) container.textContent = '尚無課程，請新增或重新讀取雲端課程。';
 }
 
 // Todos Logic
@@ -140,7 +192,7 @@ function renderTodos() {
         <div class="flex items-center justify-between p-3.5 bg-[#FDFBF7] rounded-xl border border-[#E3D5C8] shadow-sm">
             <div class="flex items-center space-x-3">
                 <input type="checkbox" ${t.completed ? 'checked' : ''} onclick="toggleTodo(${t.id})" class="w-4 h-4 text-[#8D7B68] rounded focus:ring-[#8D7B68] cursor-pointer">
-                <span class="text-sm ${t.completed ? 'line-through text-stone-400' : 'text-[#4A3B32] font-medium'}">${t.text}</span>
+                <span class="text-sm ${t.completed ? 'line-through text-stone-400' : 'text-[#4A3B32] font-medium'}">${escapeHtml(t.text)}</span>
             </div>
             <div class="flex items-center space-x-3">
                 <span class="text-xs text-stone-400"><i class="fa-regular fa-calendar mr-1"></i>${t.date}</span>
@@ -175,6 +227,7 @@ function navigateCalendar(direction) {
     if (currentView === 'year') {
         currentCalendarDate.setFullYear(currentCalendarDate.getFullYear() + direction);
     } else if (currentView === 'month') {
+        currentCalendarDate.setDate(1);
         currentCalendarDate.setMonth(currentCalendarDate.getMonth() + direction);
     } else if (currentView === 'week') {
         currentCalendarDate.setDate(currentCalendarDate.getDate() + (direction * 7));
@@ -404,7 +457,7 @@ function renderDayTimeGridView(titleEl, container) {
                     ${matchedEvents.filter(e => e.time.split(':')[0] == String(hour).padStart(2, '0')).map(e => `
                         <div class="bg-[#8D7B68] text-white text-xs px-3 py-1.5 rounded-lg shadow-sm flex items-center space-x-2">
                             <i class="fa-solid fa-clock text-[10px]"></i>
-                            <span class="font-bold">${e.title}</span>
+                            <span class="font-bold">${escapeHtml(e.title)}</span>
                             <span class="text-[10px] opacity-75">(${e.repeat === 'weekly' ? '每週重複' : e.repeat === 'daily' ? '每天重複' : '單次'})</span>
                         </div>
                     `).join('')}
@@ -438,29 +491,53 @@ function closeEventModal() {
 
 function handleEventSubmit(e) {
     e.preventDefault();
-    const title = document.getElementById('modal-event-title').value;
+
+    const title = document.getElementById('modal-event-title').value.trim();
     const type = document.getElementById('modal-event-type').value;
     const repeat = document.getElementById('modal-event-repeat').value;
     const date = document.getElementById('modal-event-date').value;
     const time = document.getElementById('modal-event-time').value;
 
-    // 1. 建立行事曆行程
-    const newEvent = { id: Date.now(), title, type, repeat, date, time };
-    calendarEvents.push(newEvent);
-
-    // 2. 如果選擇的是「作業/任務」，自動同步新增到待辦事項中！
-    if (type === 'task') {
-        todos.push({ id: Date.now() + 1, text: title, date: date, completed: false });
+    if (!title) {
+        alert('請輸入行程名稱。');
+        return;
     }
 
-    // 3. 如果選擇的是「課程」，自動同步新增到課程管理中！
-    if (type === 'course') {
-        courses.push({ id: Date.now() + 2, name: title, color: '#8D7B68' });
+    // 本次先處理單次作業，避免把重複作業誤存成單次。
+    if (type === 'task' && repeat !== 'once') {
+        alert('重複作業尚未實作，請先選擇「僅一次」。');
+        return;
+    }
+
+    if (type === 'task') {
+        // 作業只存在 todos，行事曆由同一份資料顯示。
+        todos.push({
+            id: Date.now(),
+            text: title,
+            date,
+            time,
+            completed: false
+        });
+    } else {
+        // 一般活動與既有課程行程維持原本的儲存方式。
+        calendarEvents.push({
+            id: Date.now(),
+            title,
+            type,
+            repeat,
+            date,
+            time
+        });
     }
 
     closeEventModal();
     saveData();
-    alert('行程新增成功！已自動同步至對應的時間軸與管理模組。');
+
+    alert(
+        type === 'course'
+            ? '本機課程行程已新增。雲端課程請在課程管理建立；排程連動尚未完成。'
+            : '本機項目已新增。'
+    );
 }
 
 // Pomodoro Timer Logic
@@ -487,6 +564,7 @@ function setTimerMode(mode) {
 }
 
 function toggleTimer() {
+    if (timeLeft <= 0) resetTimer();
     if (isRunning) {
         clearInterval(timer);
         isRunning = false;
