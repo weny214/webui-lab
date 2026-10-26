@@ -491,29 +491,53 @@ function closeEventModal() {
 
 function handleEventSubmit(e) {
     e.preventDefault();
-    const title = document.getElementById('modal-event-title').value;
+
+    const title = document.getElementById('modal-event-title').value.trim();
     const type = document.getElementById('modal-event-type').value;
     const repeat = document.getElementById('modal-event-repeat').value;
     const date = document.getElementById('modal-event-date').value;
     const time = document.getElementById('modal-event-time').value;
 
-    // 1. 建立行事曆行程
-    const newEvent = { id: Date.now(), title, type, repeat, date, time };
-    calendarEvents.push(newEvent);
-
-    // 2. 如果選擇的是「作業/任務」，自動同步新增到待辦事項中！
-    if (type === 'task') {
-        todos.push({ id: Date.now() + 1, text: title, date: date, completed: false });
+    if (!title) {
+        alert('請輸入行程名稱。');
+        return;
     }
 
-    // 3. 如果選擇的是「課程」，自動同步新增到課程管理中！
-    if (type === 'course') {
-        // Cloud courses are created in course management; local events stay independent.
+    // 本次先處理單次作業，避免把重複作業誤存成單次。
+    if (type === 'task' && repeat !== 'once') {
+        alert('重複作業尚未實作，請先選擇「僅一次」。');
+        return;
+    }
+
+    if (type === 'task') {
+        // 作業只存在 todos，行事曆由同一份資料顯示。
+        todos.push({
+            id: Date.now(),
+            text: title,
+            date,
+            time,
+            completed: false
+        });
+    } else {
+        // 一般活動與既有課程行程維持原本的儲存方式。
+        calendarEvents.push({
+            id: Date.now(),
+            title,
+            type,
+            repeat,
+            date,
+            time
+        });
     }
 
     closeEventModal();
     saveData();
-    alert(type === 'course' ? '本機課程行程已新增。雲端課程請在課程管理建立；排程連動將於下一階段完成。' : '本機行程已新增。');
+
+    alert(
+        type === 'course'
+            ? '本機課程行程已新增。雲端課程請在課程管理建立；排程連動尚未完成。'
+            : '本機項目已新增。'
+    );
 }
 
 // Pomodoro Timer Logic
