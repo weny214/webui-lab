@@ -9,6 +9,8 @@ function escapeHtml(value) {
 }
 function loadLocalFeatures(userId) {
   localOwner = userId || null;
+  pendingFocusMinutes = 0;
+  updateFocusSaveStatus();
   let data = {};
   try { data = JSON.parse(localStorage.getItem('studyhub_local_' + userId)) || {}; } catch {}
   todos = userId && Array.isArray(data.todos) ? data.todos : [];
@@ -16,18 +18,24 @@ function loadLocalFeatures(userId) {
   focusMinutesTotal = userId && Number.isFinite(data.focusMinutesTotal) ? data.focusMinutesTotal : 0;
 }
 
-// Save data helper
-function saveData() {
-    if (!localOwner) return;
+// Persist the proposed state before committing it to memory or updating the UI.
+function saveData(changes = {}) {
+    if (!localOwner) return false;
+    const next = {todos, calendarEvents, focusMinutesTotal, ...changes};
     try {
-        localStorage.setItem('studyhub_local_' + localOwner, JSON.stringify({todos, calendarEvents, focusMinutesTotal}));
-    } catch { alert('本機儲存失敗，請保留輸入內容；目前變更可能在重新整理後遺失。'); }
+        localStorage.setItem('studyhub_local_' + localOwner, JSON.stringify(next));
+    } catch {
+        alert('本機儲存失敗，變更尚未儲存。請保留輸入並重試。');
+        return false;
+    }
+    ({todos, calendarEvents, focusMinutesTotal} = next);
     updateDashboard();
     
     const calendarTab = document.getElementById('tab-calendar');
     if(calendarTab && !calendarTab.classList.contains('hidden')) {
         renderCalendar();
     }
+    return true;
 }
 
 // Tab Switching Logic
@@ -168,21 +176,21 @@ function renderCourses() {
 // Todos Logic
 function addTodo(e) {
     e.preventDefault();
-    const text = document.getElementById('todo-text').value;
+    const text = document.getElementById('todo-text').value.trim();
     const date = document.getElementById('todo-date').value;
-    todos.push({ id: Date.now(), text, date, completed: false });
+    if (!text || !date) { alert('請填寫任務內容與日期。'); return; }
+    const nextTodos = [...todos, { id: Date.now(), text, date, completed: false }];
+    if (!saveData({todos: nextTodos})) return;
     document.getElementById('todo-form').reset();
-    saveData();
 }
 
 function toggleTodo(id) {
-    todos = todos.map(t => t.id === id ? { ...t, completed: !t.completed } : t);
-    saveData();
+    const nextTodos = todos.map(t => t.id === id ? { ...t, completed: !t.completed } : t);
+    if (!saveData({todos: nextTodos})) renderTodos();
 }
 
 function deleteTodo(id) {
-    todos = todos.filter(t => t.id !== id);
-    saveData();
+    saveData({todos: todos.filter(t => t.id !== id)});
 }
 
 function renderTodos() {
@@ -438,6 +446,27 @@ function renderDayTimeGridView(titleEl, container) {
     titleEl.textContent = `${year}年 ${month + 1}月 ${day}日 (${['週日','週一','週二','週三','週四','週五','週六'][currentCalendarDate.getDay()]})`;
     const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
+    const todoSection = document.createElement('section');
+    todoSection.className = 'space-y-2 mb-4';
+    const todoHeading = document.createElement('h3');
+    todoHeading.className = 'font-bold text-sm';
+    todoHeading.textContent = '當日待辦';
+    todoSection.appendChild(todoHeading);
+    const matchedTodos = todos.filter(t => t.date === dateStr);
+    for (const todo of matchedTodos) {
+        const item = document.createElement('p');
+        item.className = todo.completed ? 'text-sm line-through text-stone-400' : 'text-sm';
+        item.textContent = `${todo.completed ? '✓' : '○'} ${todo.time ? todo.time + ' ' : ''}${todo.text}`;
+        todoSection.appendChild(item);
+    }
+    if (!matchedTodos.length) {
+        const empty = document.createElement('p');
+        empty.className = 'text-sm text-stone-400';
+        empty.textContent = '當日沒有待辦事項。';
+        todoSection.appendChild(empty);
+    }
+    container.appendChild(todoSection);
+
     const timeGridWrapper = document.createElement('div');
     timeGridWrapper.className = "bg-[#FDFBF7] rounded-xl border border-[#E3D5C8] shadow-sm overflow-y-auto max-h-[600px] relative";
 
@@ -446,9 +475,8 @@ function renderDayTimeGridView(titleEl, container) {
     for (let hour = 0; hour < 24; hour++) {
         const timeLabel = `${String(hour).padStart(2, '0')}:00`;
         
-        // 找出這個小時的所有行程與任務
+        // Timed events belong in the grid; todos appear once above it.
         const matchedEvents = calendarEvents.filter(e => e.date === dateStr && e.time.startsWith(String(hour).padStart(2, '0')));
-        const matchedTodos = todos.filter(t => t.date === dateStr); // 放在當日置頂區
 
         hoursHtml += `
             <div class="flex border-b border-[#E3D5C8] min-h-[60px] group hover:bg-[#F5EBE6]/30 transition cursor-pointer" onclick="openEventModalWithTime('${dateStr}', '${String(hour).padStart(2, '0')}:00')">
@@ -458,7 +486,7 @@ function renderDayTimeGridView(titleEl, container) {
                         <div class="bg-[#8D7B68] text-white text-xs px-3 py-1.5 rounded-lg shadow-sm flex items-center space-x-2">
                             <i class="fa-solid fa-clock text-[10px]"></i>
                             <span class="font-bold">${escapeHtml(e.title)}</span>
-                            <span class="text-[10px] opacity-75">(${e.repeat === 'weekly' ? '每週重複' : e.repeat === 'daily' ? '每天重複' : '單次'})</span>
+                            <span class="text-[10px] opacity-75">(${e.repeat === 'weekly' || e.repeat === 'daily' ? '舊有重複標記，尚未展開' : '單次'})</span>
                         </div>
                     `).join('')}
                     <span class="text-[10px] text-stone-300 opacity-0 group-hover:opacity-150 transition">+ 點擊此時段新增行程</span>
@@ -498,40 +526,39 @@ function handleEventSubmit(e) {
     const date = document.getElementById('modal-event-date').value;
     const time = document.getElementById('modal-event-time').value;
 
-    if (!title) {
-        alert('請輸入行程名稱。');
+    if (!title || !date || !time) {
+        alert('請填寫行程名稱、日期與時間。');
         return;
     }
 
-    // 本次先處理單次作業，避免把重複作業誤存成單次。
-    if (type === 'task' && repeat !== 'once') {
-        alert('重複作業尚未實作，請先選擇「僅一次」。');
+    // Do not promise recurring events until recurrence expansion is implemented.
+    if (repeat !== 'once') {
+        alert('重複排程尚未支援，請選擇「僅一次」。');
         return;
     }
 
     if (type === 'task') {
         // 作業只存在 todos，行事曆由同一份資料顯示。
-        todos.push({
+        if (!saveData({todos: [...todos, {
             id: Date.now(),
             text: title,
             date,
             time,
             completed: false
-        });
+        }]})) return;
     } else {
         // 一般活動與既有課程行程維持原本的儲存方式。
-        calendarEvents.push({
+        if (!saveData({calendarEvents: [...calendarEvents, {
             id: Date.now(),
             title,
             type,
             repeat,
             date,
             time
-        });
+        }]})) return;
     }
 
     closeEventModal();
-    saveData();
 
     alert(
         type === 'course'
@@ -545,58 +572,84 @@ let timer = null;
 let timeLeft = 25 * 60;
 let isRunning = false;
 let currentMode = 'focus';
+let timerRemainingMs = 25 * 60 * 1000;
+let timerDeadline = null;
+let pendingFocusMinutes = 0;
+
+function updateFocusSaveStatus() {
+    document.getElementById('timer-save-status').textContent = pendingFocusMinutes
+        ? `${pendingFocusMinutes} 分鐘尚未儲存，請按「重新儲存」。重新整理或登出將遺失這筆進度。`
+        : '';
+    document.getElementById('timer-save-retry').hidden = !pendingFocusMinutes;
+}
+
+function saveFocusProgress() {
+    if (!pendingFocusMinutes) return true;
+    const saved = saveData({focusMinutesTotal: focusMinutesTotal + pendingFocusMinutes});
+    if (saved) pendingFocusMinutes = 0;
+    updateFocusSaveStatus();
+    return saved;
+}
+
+function timerStartLabel() {
+    return currentMode === 'focus' ? '開始專注' : '開始休息';
+}
 
 function setTimerMode(mode) {
     currentMode = mode;
-    clearInterval(timer);
-    isRunning = false;
-    document.getElementById('timer-toggle-btn').textContent = '開始專注';
     if (mode === 'focus') {
-        timeLeft = 25 * 60;
         document.getElementById('mode-focus').className = "px-4 py-1.5 rounded-full text-xs font-bold bg-[#8D7B68] text-white transition";
         document.getElementById('mode-break').className = "px-4 py-1.5 rounded-full text-xs font-bold bg-[#F5EBE6] text-[#4A3B32] transition";
     } else {
-        timeLeft = 5 * 60;
         document.getElementById('mode-break').className = "px-4 py-1.5 rounded-full text-xs font-bold bg-[#8D7B68] text-white transition";
         document.getElementById('mode-focus').className = "px-4 py-1.5 rounded-full text-xs font-bold bg-[#F5EBE6] text-[#4A3B32] transition";
     }
+    resetTimer();
+}
+
+function updateTimer() {
+    if (!isRunning) return;
+    timerRemainingMs = Math.max(0, timerDeadline - Date.now());
+    timeLeft = Math.ceil(timerRemainingMs / 1000);
     updateTimerDisplay();
+    if (timerRemainingMs === 0) {
+        clearInterval(timer);
+        isRunning = false;
+        timerDeadline = null;
+        document.getElementById('timer-toggle-btn').textContent = timerStartLabel();
+        if (currentMode === 'focus') {
+            pendingFocusMinutes += 25;
+            if (saveFocusProgress()) alert('太棒了！完成一個 25 分鐘專注，已儲存至學習時間！');
+        } else {
+            alert('休息時間結束！準備好展開下一段專注了嗎？');
+        }
+    }
 }
 
 function toggleTimer() {
-    if (timeLeft <= 0) resetTimer();
     if (isRunning) {
+        updateTimer();
+        if (!isRunning) return;
         clearInterval(timer);
         isRunning = false;
-        document.getElementById('timer-toggle-btn').textContent = '繼續專注';
+        timerDeadline = null;
+        document.getElementById('timer-toggle-btn').textContent = currentMode === 'focus' ? '繼續專注' : '繼續休息';
     } else {
+        if (timeLeft <= 0) resetTimer();
         isRunning = true;
+        timerDeadline = Date.now() + timerRemainingMs;
         document.getElementById('timer-toggle-btn').textContent = '暫停';
-        timer = setInterval(() => {
-            if (timeLeft > 0) {
-                timeLeft--;
-                updateTimerDisplay();
-            } else {
-                clearInterval(timer);
-                isRunning = false;
-                document.getElementById('timer-toggle-btn').textContent = '開始專注';
-                if (currentMode === 'focus') {
-                    focusMinutesTotal += 25;
-                    saveData();
-                    alert('太棒了！完成一個 25 分鐘專注，已自動累計至學習時間！');
-                } else {
-                    alert('休息時間結束！準備好展開下一段專注了嗎？');
-                }
-            }
-        }, 1000);
+        timer = setInterval(updateTimer, 1000);
     }
 }
 
 function resetTimer() {
     clearInterval(timer);
     isRunning = false;
-    document.getElementById('timer-toggle-btn').textContent = '開始專注';
+    timerDeadline = null;
+    document.getElementById('timer-toggle-btn').textContent = timerStartLabel();
     timeLeft = currentMode === 'focus' ? 25 * 60 : 5 * 60;
+    timerRemainingMs = timeLeft * 1000;
     updateTimerDisplay();
 }
 

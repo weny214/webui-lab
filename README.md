@@ -11,7 +11,21 @@
 - 重複排程、單次例外、課程排程連動、自訂番茄鐘與各科統計為下一階段。
 - LINE 僅為規劃。
 - 舊版 studyhub_* 測試資料不刪除、不自動上傳。新版本機模組使用 studyhub_local_<user-id>。
-- 本批順便修正月底切換月份溢位，以及番茄鐘在 00:00 重開時再次累計的問題；不代表整個計時器已重構。
+- 本機寫入成功後才更新清單與清空表單，失敗保留輸入與原資料。
+- 日檢視顯示當日待辦；每日／每週新增選項暫停使用，舊資料保留。
+- 番茄鐘依截止時間計算，暫停不扣時間；專注分鐘儲存失敗時可重試。未儲存分鐘在重新整理或登出後會遺失，執行中的倒數仍不跨重新整理保存。
+
+本次變更、測試範圍與 W05／W06 待填紀錄見 [改善與學習紀錄](docs/learning-log.md)。
+
+### Project Milestone
+
+- **Problem**：集中管理課程、學習待辦、行程與專注時間，減少分散紀錄。
+- **Target Users**：需要管理個人課程與學習任務的使用者。
+- **Core Features**：Email 帳號、雲端課程管理、本機待辦／行事曆／番茄鐘。
+- **Data**：課程屬於 Supabase；待辦、行程與專注分鐘按帳號存於此瀏覽器。
+- **External API**：Supabase Auth 與 Data API，透過前端 SDK 使用。
+- **Security / Privacy**：課程由 grants／RLS 授權；本機按帳號分鍵不等於存取權限或加密。真實雙帳號隔離仍待驗證。
+- **MVP**：先完成可靠的課程讀寫與本機流程及其驗收，再擴充重複排程、同步與統計；此為目前工程範圍，使用者可再確認產品優先順序。
 
 ## 1. Supabase 必要設定
 
@@ -86,15 +100,18 @@ python -m http.server 7777
 
 ```bash
 npm test
+npm run check
 ```
 
-測試只需 Node.js，不需安裝套件。tests/auth-courses-unit.cjs 使用簡化 DOM 與 mock service，驗證新增、編輯、軟刪除、文字節點、儲存失敗保留輸入、登出清空、帳號本機隔離及忽略過期請求。
+以上命令只需 Node.js，不需安裝套件。2026-10-27 實際結果：
 
-交付前已在 JavaScript 執行環境跑過相同測試邏輯並通過，四個 JS 檔案也通過語法解析。
-- 真實 Auth settings API 回應 HTTP 200：Email 啟用、註冊啟用、Email 驗證開啟。
-- 課程 API 回應 PGRST205／404：交付檢查時 courses 尚未存在於 API schema cache。
-- SDK CDN 指定版本回應 HTTP 200。
-- **未完成真實瀏覽器、跨電腦、實際 Email 註冊與 RLS 整合測試。**瀏覽器下載失敗，隨後執行環境中斷；不能把 mock 測試當作已完成展示驗收。
+- tests/auth-courses-unit.cjs：原有 15 個斷言通過，使用 DOM／課程 service 替身驗證課程操作與帳號切換。
+- tests/local-features-unit.cjs：13 個案例通過，涵蓋本機寫入失敗與重試、日檢視、重複選項、可控制時鐘與專注統計。
+- 四個應用程式 JavaScript 檔案語法檢查通過。
+- 可選的 `npm run test:browser:local`：三組 Chromium 互動檢查通過，使用模擬 Supabase 與僅供測試的顯示規則。安裝工具及重跑步驟見學習紀錄；不代表 CDN／RWD 或真實雲端整合通過。
+
+先前環境檢查的 Auth settings 回應 HTTP 200；匿名讀取 courses 回應 401／42501（無 SELECT 權限）。更早交付時的 PGRST205／404 為歷史結果，不代表目前資料表狀態。
+使用者已確認執行 SQL，但**真實 Email 註冊、跨電腦讀寫、A/B 帳號 RLS、完整 RWD 與公開部署仍待驗收**。Mock 測試不能取代這些結果。
 
 ## 6. 手動驗收（必要）
 
