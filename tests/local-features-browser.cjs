@@ -38,8 +38,6 @@ try {
       };
     });
     await page.goto(process.env.STUDYHUB_TEST_URL || 'http://127.0.0.1:7777/', {waitUntil: 'networkidle'});
-    // Only visibility utility behavior is supplied; this is not a Tailwind/RWD test.
-    await page.addStyleTag({content: '.hidden {display:none !important;}'});
     await page.locator('#account-panel').waitFor({state: 'visible'});
     await page.evaluate(() => switchTab('todos'));
     await page.locator('#todo-text').fill('browser task');
@@ -105,13 +103,14 @@ try {
     assert.equal(await page.locator('#timer-save-retry').isVisible(), false);
     await page.clock.fastForward(60_000);
     assert.equal(await page.evaluate(() => focusMinutesTotal), 25);
+    await page.locator('#account-toggle').click();
     await page.locator('#logout-button').click();
     assert.equal(await page.locator('#auth-panel').isVisible(), true);
     assert.equal(await page.locator('main').isVisible(), false);
     assert.deepEqual(errors, []);
     assert.equal(dialogs.some(message => message.includes('unsupported repeat')), false);
     console.log('PASS: deadline completion, visible retry control, one-time persisted credit, and logout in Chromium.');
-    console.log('Scope: local browser interactions with mocked Supabase and visibility-only CSS; no real Auth, RLS, CDN, or RWD claim.');
+    console.log('Scope: local browser interactions with mocked Supabase and production local CSS; no real Auth, RLS, CDN, or full-app RWD claim.');
   } finally {
     await browser.close();
   }

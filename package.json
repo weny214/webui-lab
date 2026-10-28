@@ -3,7 +3,8 @@
   "private": true,
   "scripts": {
     "test": "node tests/auth-courses-unit.cjs && node --test tests/local-features-unit.cjs",
-    "check": "node --check script.js && node --check js/auth.js && node --check js/course-service.js && node --check js/supabase-client.js",
-    "test:browser:local": "node tests/local-features-browser.cjs"
+    "check": "node --check script.js && node --check js/navigation.js && node --check js/auth.js && node --check js/course-service.js && node --check js/supabase-client.js",
+    "test:browser:local": "node tests/local-features-browser.cjs && node tests/navigation-browser.cjs",
+    "test:browser:navigation": "node tests/navigation-browser.cjs"
   }
 }

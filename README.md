@@ -14,8 +14,10 @@
 - 本機寫入成功後才更新清單與清空表單，失敗保留輸入與原資料。
 - 日檢視顯示當日待辦；每日／每週新增選項暫停使用，舊資料保留。
 - 番茄鐘依截止時間計算，暫停不扣時間；專注分鐘儲存失敗時可重試。未儲存分鐘在重新整理或登出後會遺失，執行中的倒數仍不跨重新整理保存。
+- 共用 Sidebar 收納五個主要功能；桌機可收合，手機使用遮罩抽屜，帳號與登出移至 Navbar 右側選單。
 
 本次變更、測試範圍與 W05／W06 待填紀錄見 [改善與學習紀錄](docs/learning-log.md)。
+Navbar／Sidebar 的行為、鍵盤操作與驗證範圍見 [導覽改善紀錄](docs/navigation.md)。
 
 ### Project Milestone
 
@@ -71,6 +73,7 @@ python -m http.server 7777
 | index.html | 登入、已登入畫面、表單 |
 | js/supabase-client.js | 初始化 SDK 與公開連線資訊 |
 | js/auth.js | 註冊／登入／登出、帳號切換與資料載入 |
+| js/navigation.js | Sidebar、帳號選單、選取狀態、手機焦點及響應式清理 |
 | js/course-service.js | 對 courses 發送讀寫請求 |
 | script.js | 課程表單與 DOM、既有本機模組 |
 | supabase/migrations/001_courses.sql | 資料結構、CHECK、grants、RLS |
@@ -103,12 +106,12 @@ npm test
 npm run check
 ```
 
-以上命令只需 Node.js，不需安裝套件。2026-10-27 實際結果：
+以上命令只需 Node.js，不需安裝套件。2026-10-28 實際結果：
 
 - tests/auth-courses-unit.cjs：原有 15 個斷言通過，使用 DOM／課程 service 替身驗證課程操作與帳號切換。
 - tests/local-features-unit.cjs：13 個案例通過，涵蓋本機寫入失敗與重試、日檢視、重複選項、可控制時鐘與專注統計。
-- 四個應用程式 JavaScript 檔案語法檢查通過。
-- 可選的 `npm run test:browser:local`：三組 Chromium 互動檢查通過，使用模擬 Supabase 與僅供測試的顯示規則。安裝工具及重跑步驟見學習紀錄；不代表 CDN／RWD 或真實雲端整合通過。
+- 五個應用程式 JavaScript 檔案語法檢查通過。
+- 可選的 `npm run test:browser:local`：原有三組互動檢查及新增導覽檢查通過；導覽使用真實本機 CSS，在 320／375／768／1440px 驗證。Supabase 使用測試替身，外部 CDN 阻擋；不代表完整應用程式 RWD 或真實雲端整合通過。
 
 先前環境檢查的 Auth settings 回應 HTTP 200；匿名讀取 courses 回應 401／42501（無 SELECT 權限）。更早交付時的 PGRST205／404 為歷史結果，不代表目前資料表狀態。
 使用者已確認執行 SQL，但**真實 Email 註冊、跨電腦讀寫、A/B 帳號 RLS、完整 RWD 與公開部署仍待驗收**。Mock 測試不能取代這些結果。

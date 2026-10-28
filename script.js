@@ -41,28 +41,22 @@ function saveData(changes = {}) {
 // Tab Switching Logic
 function switchTab(tabId) {
     const tabs = ['dashboard', 'courses', 'todos', 'calendar', 'pomodoro'];
+    if (!tabs.includes(tabId)) return;
     tabs.forEach(t => {
         const tabEl = document.getElementById(`tab-${t}`);
         if(tabEl) tabEl.classList.add('hidden');
-        
-        const navBtn = document.getElementById(`nav-${t}`);
-        if(navBtn) {
-            navBtn.className = "px-4 py-2 rounded-lg font-medium text-sm transition text-[#4A3B32] hover:bg-[#E3D5C8]";
-        }
     });
     
     const targetTab = document.getElementById(`tab-${tabId}`);
     if(targetTab) targetTab.classList.remove('hidden');
 
-    const activeNav = document.getElementById(`nav-${tabId}`);
-    if(activeNav) {
-        activeNav.className = "px-4 py-2 rounded-lg font-medium text-sm transition bg-[#8D7B68] text-white";
-    }
+    window.studyNavigation?.setActiveNavigation(tabId);
 
     if(tabId === 'calendar') {
         renderCalendar();
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.studyNavigation?.afterNavigation(tabId);
 }
 
 // Dashboard & Render

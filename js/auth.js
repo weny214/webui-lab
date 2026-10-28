@@ -28,6 +28,7 @@ async function applySession(session) {
   document.getElementById('auth-panel').hidden = !!user;
   document.getElementById('account-panel').hidden = !user;
   document.getElementById('account-email').textContent = user?.email || '';
+  window.studyNavigation?.setUser(user);
   document.getElementById('course-status').textContent = '';
   if (!user) return;
   courseLoading = true;

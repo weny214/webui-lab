@@ -13,35 +13,56 @@
 <body class="min-h-screen flex flex-col justify-between font-sans">
 
     <!-- Header / Navbar -->
-    <header class="bg-[#F5EBE6] border-b border-[#E3D5C8] shadow-sm py-4 px-6 sticky top-0 z-50">
-        <div class="max-w-6xl mx-auto flex justify-between items-center">
-            <div class="flex items-center space-x-3">
-                <div class="bg-[#8D7B68] text-white p-2 rounded-xl shadow">
-                    <i class="fa-solid fa-graduation-cap text-xl"></i>
-                </div>
-                <div>
-                    <h1 class="text-xl font-bold tracking-wide text-[#4A3B32]">Study Hub</h1>
-                    <p class="text-xs text-[#8D7B68]">個人學習與時間管理平台</p>
+    <header id="site-header" class="site-header">
+        <div class="navbar">
+            <div class="navbar-brand">
+                <button id="sidebar-toggle" data-auth-required hidden type="button" class="icon-button" aria-label="開啟導覽選單" aria-controls="sidebar" aria-expanded="false">
+                    <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><path d="M4 6h16M4 12h16M4 18h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                </button>
+                <div class="brand">
+                    <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" width="28" height="28" focusable="false"><path d="m2 8 10-5 10 5-10 5L2 8Zm4 3v5c4 3 8 3 12 0v-5M22 8v7" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg></span>
+                    <div class="brand-copy">
+                        <h1>Study Hub</h1>
+                        <p>個人學習與時間管理平台</p>
+                    </div>
                 </div>
             </div>
-            <nav data-auth-required hidden class="hidden md:flex space-x-2">
-                <button onclick="switchTab('dashboard')" id="nav-dashboard" class="px-4 py-2 rounded-lg font-medium text-sm transition bg-[#8D7B68] text-white">總覽儀表板</button>
-                <button onclick="switchTab('courses')" id="nav-courses" class="px-4 py-2 rounded-lg font-medium text-sm transition text-[#4A3B32] hover:bg-[#E3D5C8]">課程管理</button>
-                <button onclick="switchTab('todos')" id="nav-todos" class="px-4 py-2 rounded-lg font-medium text-sm transition text-[#4A3B32] hover:bg-[#E3D5C8]">待辦事項</button>
-                <button onclick="switchTab('calendar')" id="nav-calendar" class="px-4 py-2 rounded-lg font-medium text-sm transition text-[#4A3B32] hover:bg-[#E3D5C8]">行事曆</button>
-                <button onclick="switchTab('pomodoro')" id="nav-pomodoro" class="px-4 py-2 rounded-lg font-medium text-sm transition text-[#4A3B32] hover:bg-[#E3D5C8]">番茄鐘</button>
-            </nav>
+            <div class="navbar-actions">
+                <button id="navbar-login" type="button" class="account-button">登入</button>
+                <div id="account-panel" hidden class="account-panel">
+                    <button id="account-toggle" type="button" class="account-button account-toggle" aria-label="帳號選單" aria-controls="account-menu" aria-expanded="false">
+                        <span id="account-avatar" class="account-avatar" aria-hidden="true">我</span>
+                        <span id="account-label" class="account-label"></span>
+                        <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" focusable="false"><path d="m5 7 5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
+                    <div id="account-menu" hidden class="account-dropdown">
+                        <p class="account-caption">目前登入帳號</p>
+                        <p id="account-email" class="account-full-email"></p>
+                        <button id="logout-button" type="button" class="account-logout">登出</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </header>
 
-    <!-- Mobile Nav (Bottom) -->
-    <div data-auth-required hidden class="md:hidden fixed bottom-0 left-0 right-0 bg-[#F5EBE6] border-t border-[#E3D5C8] flex justify-around py-3 z-50 shadow-lg">
-        <button onclick="switchTab('dashboard')" id="mob-dashboard" class="flex flex-col items-center text-xs text-[#8D7B68] font-bold"><i class="fa-solid fa-chart-pie text-lg mb-1"></i>總覽</button>
-        <button onclick="switchTab('courses')" id="mob-courses" class="flex flex-col items-center text-xs text-[#4A3B32]"><i class="fa-solid fa-book text-lg mb-1"></i>課程</button>
-        <button onclick="switchTab('todos')" id="mob-todos" class="flex flex-col items-center text-xs text-[#4A3B32]"><i class="fa-solid fa-list-check text-lg mb-1"></i>待辦</button>
-        <button onclick="switchTab('calendar')" id="mob-calendar" class="flex flex-col items-center text-xs text-[#4A3B32]"><i class="fa-solid fa-calendar-days text-lg mb-1"></i>行事曆</button>
-        <button onclick="switchTab('pomodoro')" id="mob-pomodoro" class="flex flex-col items-center text-xs text-[#4A3B32]"><i class="fa-solid fa-clock text-lg mb-1"></i>番茄鐘</button>
-    </div>
+    <div id="app-shell" class="app-shell">
+        <button id="sidebar-backdrop" hidden type="button" class="sidebar-backdrop" tabindex="-1" aria-label="關閉導覽選單"></button>
+        <aside id="sidebar" hidden class="sidebar" aria-labelledby="sidebar-title" tabindex="-1">
+            <div class="sidebar-heading">
+                <h2 id="sidebar-title">功能選單</h2>
+                <button id="sidebar-close" type="button" class="icon-button" aria-label="關閉導覽選單">
+                    <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                </button>
+            </div>
+            <nav class="sidebar-nav" aria-label="主要功能">
+                <button id="nav-dashboard" type="button" data-tab="dashboard" aria-controls="tab-dashboard" aria-current="page">總覽儀表板</button>
+                <button id="nav-courses" type="button" data-tab="courses" aria-controls="tab-courses">課程管理</button>
+                <button id="nav-todos" type="button" data-tab="todos" aria-controls="tab-todos">待辦事項</button>
+                <button id="nav-calendar" type="button" data-tab="calendar" aria-controls="tab-calendar">行事曆</button>
+                <button id="nav-pomodoro" type="button" data-tab="pomodoro" aria-controls="tab-pomodoro">番茄鐘</button>
+            </nav>
+        </aside>
+        <div id="app-content" class="app-content">
 
     <section id="auth-panel" class="max-w-md mx-auto w-full p-6">
       <h2 class="text-xl font-bold mb-4">登入 Study Hub</h2>
@@ -57,15 +78,13 @@
       </form>
       <p id="auth-message" role="status" aria-live="polite" class="mt-4"></p>
     </section>
-    <section id="account-panel" hidden class="max-w-6xl mx-auto w-full px-4 pt-4">
-      <span id="account-email"></span>
-      <button id="logout-button" type="button" class="border rounded px-3 py-1">登出</button>
-      <p class="text-sm mt-2">本階段：課程已接雲端；待辦、行事曆與專注時間仍只存在此瀏覽器，按帳號分開保存。</p>
-      <p id="course-status" role="status" aria-live="polite" class="mt-2"></p>
-      <button id="course-reload" type="button" class="border rounded px-3 py-1">重新讀取雲端課程</button>
-    </section>
     <!-- Main Container -->
-    <main data-auth-required hidden class="max-w-6xl mx-auto px-4 py-6 w-full flex-grow mb-16 md:mb-0">
+    <main id="main-content" data-auth-required hidden class="max-w-6xl mx-auto px-4 py-6 w-full flex-grow">
+        <section class="feature-notice" aria-label="資料儲存與課程狀態">
+            <p>課程已接雲端；待辦、行事曆與專注時間仍只存在此瀏覽器，按帳號分開保存。</p>
+            <p id="course-status" role="status" aria-live="polite"></p>
+            <button id="course-reload" type="button" class="border rounded px-3 py-1">重新讀取雲端課程</button>
+        </section>
 
         <!-- TAB 1: 總覽儀表板 (Dashboard) -->
         <section id="tab-dashboard" class="space-y-6">
@@ -270,8 +289,11 @@
         </div>
     </div>
 
+        </div>
+    </div>
+
     <!-- Footer -->
-    <footer class="bg-[#F5EBE6] border-t border-[#E3D5C8] text-stone-500 text-center py-4 text-xs mt-12">
+    <footer id="site-footer" class="bg-[#F5EBE6] border-t border-[#E3D5C8] text-stone-500 text-center py-4 text-xs mt-12">
         <p>Study Hub &copy; 2026 | Vibe Coding Homework 5</p>
     </footer>
 
@@ -280,6 +302,7 @@
     <script src="js/supabase-client.js"></script>
     <script src="js/course-service.js"></script>
     <script src="script.js"></script>
+    <script src="js/navigation.js"></script>
     <script src="js/auth.js"></script>
 </body>
 </html>
